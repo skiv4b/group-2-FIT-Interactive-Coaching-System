@@ -56,8 +56,6 @@ or you can try install the
 pip install -r requirements.txt
 ```
 
-### **3. Platform-Specific Instructions**
-
 ---
 
 ## **How to Run the Program**
