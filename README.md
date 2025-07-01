@@ -30,6 +30,13 @@ You’ll need the following libraries to run the project:
 
 ### **2. Installing Dependencies**
 
+It might be useful to create virtual environment for your project, this may prevent issues with conflicting dependencies on your system (see https://docs.python.org/3/library/venv.html for
+detailed instructions how to create a virtual environment on other OS).
+
+```bash
+python -m venv /path/to/new/virtual/environment
+```
+
 You can install the required Python libraries using a package manager like `pip` for Python.
 Make sure your system has access to these libraries, and ensure the camera is working correctly.
 
@@ -47,13 +54,6 @@ pip install pyttsx3
 or you can try install the 
 ```bash
 pip install -r requirements.txt
-```
-
-It might be useful to create virtual environment for your project (see https://docs.python.org/3/library/venv.html for
-detailed instructions how to create a virtual environment on other OS).
-
-```bash
-python -m venv /path/to/new/virtual/environment
 ```
 
 ### **3. Platform-Specific Instructions**
