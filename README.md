@@ -16,10 +16,9 @@ This project implements an interactive coaching system for post-stroke rehabilit
 ---
 
 ## **Setup Instructions**
-Check the [official documentation](https://ai.google.dev/edge/mediapipe/solutions/setup_python) for more details.
 
 ### **1. Prerequisites**
-Ensure you have **Python 3.8 - 3.12** installed on your machine. (Note: Mediapipe is not yet compatible with 3.13+ versions of Python)
+Ensure you have **Python 3.8 - 3.12** installed on your machine. (Note: Mediapipe is not yet compatible with 3.13+ versions of Python. Check the [official documentation of Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/setup_python) for more details.)
 
 You’ll need the following libraries to run the project:
 
