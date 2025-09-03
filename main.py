@@ -16,13 +16,18 @@ def main():
     and starts the main loop to continuously process frames from the webcam.
     """
 
+    
     # Initialize the components: Sense for input, Think for decision-making, Act for output
     sense = Sense.Sense()
     act = Act.Act()
     think = Think.Think(act)
 
+
+    # Search and print available camera devices (may take a while to complete)
+    #searchValidCameraIndexes()
+    
     # Initialize the webcam capture
-    cap = cv2.VideoCapture(0)  # Use the default camera (0)
+    cap = cv2.VideoCapture(0)  # Use the default camera (0) or change to a different index if multiple cameras are connected to system
 
     # Main loop to process video frames
     while cap.isOpened():
@@ -71,6 +76,21 @@ def main():
     cap.release()
     cv2.destroyAllWindows()
 
+
+def searchValidCameraIndexes():
+    # checks the first 10 indexes. May take a while to complete
+    
+    print(f"Searching available camera index nrs")
+    valid_cams = []
+    for i in range(10):
+        cap = cv2.VideoCapture(i)
+        if cap is None or not cap.isOpened():
+            print(f"Warning: unable to open video source: {i}")
+        else:
+            print(f"Found valid video source: {i}")
+            valid_cams.append(i)
+            
+    print(f"Available camera index nrs: {valid_cams}")
 
 if __name__ == "__main__":
     main()
