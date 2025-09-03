@@ -13,6 +13,15 @@ This project implements an interactive coaching system for post-stroke rehabilit
 - Balloon visualization as graphical feedback for exercise progress.
 - Text-to-speech (TTS) audio feedback to encourage users.
 
+### **Dependencies**
+
+This project uses the following additional dependencies to take care of certain functionality:
+
+- OpenCV: For camera input and rendering the visual feedback.
+- Mediapipe: For joint detection and motion tracking.
+- pyttsx3: For text-to-speech functionality to provide audio feedback.
+- transitions: For implementing the finite state machine to track movement states.
+
 ---
 
 ## **Setup Instructions**
@@ -20,38 +29,37 @@ This project implements an interactive coaching system for post-stroke rehabilit
 ### **1. Prerequisites**
 Ensure you have **Python 3.8 - 3.12** installed on your machine. (Note: Mediapipe is not yet compatible with 3.13+ versions of Python. Check the [official documentation of Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/setup_python) for more details.)
 
-You’ll need the following libraries to run the project:
-
-- OpenCV: For camera input and rendering the visual feedback.
-- Mediapipe: For joint detection and motion tracking.
-- pyttsx3: For text-to-speech functionality to provide audio feedback.
-- transitions: For implementing the finite state machine to track movement states.
+Download and unzip the project files from this GitHub repository (or `git clone  https://github.com/utwente-interaction-lab/FIT-Interactive-Coaching-System`)
 
 ### **2. Installing Dependencies**
 
-It might be useful to create virtual environment for your project, this may prevent issues with conflicting dependencies on your system (see https://docs.python.org/3/library/venv.html for
-detailed instructions how to create a virtual environment on other OS).
+It is strongly recommended to create a virtual environment for your project, this may prevent issues with conflicting dependencies on your system (see https://docs.python.org/3/library/venv.html for
+detailed instructions how to create a virtual environment on other OS). Instructions for Windows PowerShell:
 
-```bash
-python -m venv /path/to/new/virtual/environment
+```powershell
+py -m venv venv/
 ```
 
-You can install the required Python libraries using a package manager like `pip` for Python.
-Make sure your system has access to these libraries, and ensure the camera is working correctly.
+Make sure to activate the environment each time you (re)open a terminal.
 
-```bash
-pip install opencv-python
-pip install mediapipe
-pip install gtts
-pip install playsound
-pip install transitions
-pip install numpy
-pip install matplotlib
-pip install pyttsx3
+```powershell
+.\venv\Scripts\activate
 ```
 
-or you can try install the 
-```bash
+You may need to first update pip to the latest version.
+
+```powershell
+py -m pip install --upgrade pip
+```
+You can install the required Python libraries using a package manager like `pip` for Python. Make sure your system has access to these libraries, and ensure the camera is working correctly.
+
+```powershell
+pip install opencv-python mediapipe pyttsx3 transitions
+```
+
+or you can try install the requirements
+
+```powershell
 pip install -r requirements.txt
 ```
 
