@@ -29,7 +29,7 @@ This project uses the following additional dependencies to take care of certain 
 ### **1. Prerequisites**
 Ensure you have **Python 3.8 - 3.12** installed on your machine. (Note: Mediapipe is not yet compatible with 3.13+ versions of Python. Check the [official documentation of Mediapipe](https://ai.google.dev/edge/mediapipe/solutions/setup_python) for more details.)
 
-Download and unzip the project files from this GitHub repository (or `git clone  https://github.com/utwente-interaction-lab/FIT-Interactive-Coaching-System`)
+Download and unzip the [project files](https://github.com/utwente-interaction-lab/FIT-Interactive-Coaching-System/archive/refs/heads/main.zip) from this GitHub repository (or `git clone https://github.com/utwente-interaction-lab/FIT-Interactive-Coaching-System`)
 
 ### **2. Installing Dependencies**
 
