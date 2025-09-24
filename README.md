@@ -46,7 +46,7 @@ Make sure to activate the environment each time you (re)open a terminal.
 .\venv\Scripts\activate
 ```
 
-If you get a warning about the script being disabled due to the powershell execution policy, please [update the policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.5) accordingly:
+$${\color{red}Troubleshooting}$$: If you get a warning about the script being disabled due to the powershell execution policy, please [update the policy](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_execution_policies?view=powershell-7.5) accordingly:
 
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
