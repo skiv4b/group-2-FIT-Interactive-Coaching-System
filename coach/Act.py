@@ -1,5 +1,4 @@
 # Act Component: Provide feedback to the user
-
 import mediapipe as mp
 import cv2
 import numpy as np
