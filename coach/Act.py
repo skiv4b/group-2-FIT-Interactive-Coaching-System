@@ -1,132 +1,169 @@
 # Act Component: Provide feedback to the user
+
 import mediapipe as mp
 import cv2
 import numpy as np
 import random
-import pyttsx3
-
+import pygame
 
 # Act Component: Visualization to motivate user, visualization such as the skeleton and debugging information.
 # Things to add: Other graphical visualization, a proper GUI, more verbal feedback
 class Act:
 
-    def __init__(self):
-        # Balloon size and transition tracking for visualization
-        self.balloon_size = 50
-        self.transition_count = 0
-        self.max_transitions = 10  # Explodes after 10 transitions
-        self.exploded = False  # Track whether the balloon exploded
-        self.explosion_fragments = []  # Store explosion fragments
-        self.explosion_frame_count = 0  # Frame counter for explosion duration
-        self.explosion_duration = 30  # Number of frames to show explosion effect
-        self.engine = pyttsx3.init()
+    def __init__(self, width = 500, height=500):
+        self.width = width
+        self.height = height
+        self.left_grip = False
+        self.right_grip = True
 
-        self.motivating_utterances = ['keep on going', 'you are doing great. I see it', 'only a few left', 'that is awesome', 'you have almost finished the exercise']
-        # Handles balloon inflation and reset after explosion
+        # Initialize pygame mixer (fast sound playback)
+        pygame.mixer.init()
 
-    def handle_balloon_inflation(self):
-        """
-        Increases the size of the balloon with each successful repetition.
-        """
-        if not self.exploded:  # Only inflate if balloon hasn't exploded
+        # Preload sounds into memory
+        self.game_start = pygame.mixer.Sound("files/Game Start.mp3")
+        self.game_over = pygame.mixer.Sound("files/Game Over.mp3")
+        self.capture = pygame.mixer.Sound("files/Capturing the Ball.mp3")
 
-            self.transition_count += 1
-            self.balloon_size += 10  # Inflate balloon by 10 units per transition
+        # Track capture channel
+        self.capture_channel = None
 
-            text = random.choice(self.motivating_utterances)
-            self.engine.say("%s %s" % (self.transition_count, text))
-            self.engine.runAndWait() # This is a blocking call. You need to run it in a thread.
+    def left_grip(self):
+        self.left_grip = True
 
-            # Check if balloon should explode
+    def right_grip (self):
+        self.right_grip = True
+    
+    def play_game_start(self):
+        self.game_start.play()
 
-            if self.transition_count >= self.max_transitions:
-                self.explode_balloon()
+    def play_game_over(self):
+        self.game_over.play()
 
-    def explode_balloon(self):
-        """
-        Handles the visual effect of the balloon exploding.
-        """
+    def play_capture(self):
+        self.capture.play()
 
-        self.exploded = True  # Mark the balloon as exploded
-        self.create_explosion_fragments()  # Generate the explosion fragments
-        self.engine.say("boooom booooom booom")
-        self.engine.runAndWait()
-
-    def reset_balloon(self):
-        """
-        Resets the balloon after it explodes.
-        """
-
-        self.transition_count = 0
-        self.balloon_size = 50  # Reset balloon size
-        self.exploded = False  # Reset explosion state
-        self.explosion_frame_count = 0  # Reset the explosion frame counter
-        self.explosion_fragments.clear()  # Clear the fragments after explosion
-
-        self.engine.say("You did great! Let's reset the balloon.")
-        self.engine.runAndWait()
-        # Create explosion fragments with random sizes and positions
-
-    def create_explosion_fragments(self):
-        # Generate random "fragments" for explosion effect
-        for _ in range(20):
-            fragment = {
-                'position': (random.randint(200, 300), random.randint(200, 400)),
-                'size': random.randint(5, 15),
-                'color': (0, 0, 255),  # Red fragments
-                'dx': random.randint(-10, 10),  # X-direction movement
-                'dy': random.randint(-10, 10)  # Y-direction movement
-            }
-            self.explosion_fragments.append(fragment)
-
-        # Visualization of the balloon and explosion in OpenCV
+    def play_capture(self):
+        # Play on its own channel so we can track it
+        self.capture_channel = self.capture.play()
 
     def visualize_balloon(self):
-        """
-        Renders the balloon .
-        """
+        radius = 50
+        y_pos = -radius
+        x_pos = random.randint(radius, self.width - radius)
+        captured = False
+        self.score = 0   # 🔹 initialize score
 
-        # Create a black background
-        img = np.zeros((500, 500, 3), dtype=np.uint8)
+        # Load images
+        left = cv2.imread("files/LeftHandOpen.png", cv2.IMREAD_UNCHANGED)
+        right = cv2.imread("files/RightHandOpen.png", cv2.IMREAD_UNCHANGED)
+        left_closed = cv2.imread("files/LeftHandClosed.png", cv2.IMREAD_UNCHANGED)
+        right_closed = cv2.imread("files/RightHandClosed.png", cv2.IMREAD_UNCHANGED)
 
-        if not self.exploded:
-            # Draw the balloon (a circle) with dynamic size if it hasn't exploded
-            cv2.circle(img, (250, 300), self.balloon_size, (0, 0, 255), -1)  # Red balloon
-        else:
-            # Draw explosion fragments if balloon has exploded
-            for fragment in self.explosion_fragments:
-                x, y = fragment['position']
-                size = fragment['size']
-                color = fragment['color']
+        if left is None or right is None or left_closed is None or right_closed is None:
+            print("Error: Could not load one or multiple images.")
+            return
 
-                # Move fragments in random directions
-                x += fragment['dx']
-                y += fragment['dy']
-                fragment['position'] = (x, y)
+        # Resize
+        left = cv2.resize(left, (200, 200))
+        right = cv2.resize(right, (200, 200))
+        left_closed = cv2.resize(left_closed, (150, 150))
+        right_closed = cv2.resize(right_closed, (150, 150))
 
-                # Draw each fragment as a small circle
-                cv2.circle(img, (x, y), size, color, -1)
+        while True:
+            img = np.zeros((self.height, self.width, 3), dtype=np.uint8)
 
-            self.explosion_frame_count += 1
+            # Draw balloon only if not captured
+            if not captured:
+                cv2.circle(img, (x_pos, y_pos), radius, (0, 0, 255), -1)
 
-            # Reset the balloon after the explosion effect finishes
-            if self.explosion_frame_count >= self.explosion_duration:
-                self.reset_balloon()
+            # Hand overlay positions
+            if not self.left_grip:
+                lx, ly = 10, 300
+                self.overlay_with_alpha(img, left, lx, ly)
+            else:
+                lx, ly = 20, 350
+                self.overlay_with_alpha(img, left_closed, lx, ly)
 
-        cv2.putText(img, f'Repeat flexing/bending your left arm to pop the balloon!', (0, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX, .55, (255, 255, 255), 2, cv2.LINE_AA)
+            if not self.right_grip:
+                rx, ry = 300, 300
+                self.overlay_with_alpha(img, right, rx, ry)
+            else:
+                rx, ry = 330, 350
+                self.overlay_with_alpha(img, right_closed, rx, ry)
 
-        # Add transition count and text
-        cv2.putText(img, f'Repetitions: {self.transition_count}', (150, 100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        cv2.putText(img, f'Balloon Size: {self.balloon_size}', (150, 150),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            # ---- Collision detection ----
+            def check_hand_collision(cx, cy, r, x, y, w, h):
+                within_x = (x <= cx <= x + w)
+                hand_mid_y = y + h // 2
+                within_y = abs(cy - hand_mid_y) <= r
+                return within_x and within_y
 
-        # Show the image in the window
-        cv2.imshow('Flex and bend your left elbow!', img)
+            if not captured:
+                if self.left_grip:
+                    h, w = left_closed.shape[:2]
+                    if check_hand_collision(x_pos, y_pos, radius, lx, ly, w, h):
+                        self.play_capture()
+                        self.score += 1   # 🔹 increase score
+                        captured = True
+
+                if self.right_grip:
+                    h, w = right_closed.shape[:2]
+                    if check_hand_collision(x_pos, y_pos, radius, rx, ry, w, h):
+                        self.play_capture()
+                        self.score += 1   # 🔹 increase score
+                        captured = True
+
+            # ---- Respawn only when sound finished ----
+            if captured:
+                if self.capture_channel is None or not self.capture_channel.get_busy():
+                    y_pos = -radius
+                    x_pos = random.randint(radius, self.width - radius)
+                    captured = False
+
+            # ---- Draw score ----
+            cv2.putText(img, f"Score: {self.score}", (20, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
+
+            # Show frame
+            cv2.imshow("Boulder climb!", img)
+
+            if cv2.waitKey(30) & 0xFF == ord('q'):
+                break
+
+            # Move balloon only if not captured
+            if not captured:
+                y_pos += 5
+                if y_pos - radius > self.height:
+                    y_pos = -radius
+                    x_pos = random.randint(radius, self.width - radius)
+
 
         # Wait for 1 ms and check if the window should be closed
         cv2.waitKey(1)
+
+    def overlay_with_alpha(self, background, overlay, x, y):
+        """
+        Draw overlay RGBA image onto background BGR image at (x,y).
+        """
+        h, w = overlay.shape[:2]
+
+        # Clip if overlay doesn't fit
+        if x + w > background.shape[1] or y + h > background.shape[0]:
+            return
+
+        if overlay.shape[2] == 4:  # RGBA image
+            bgr = overlay[:, :, :3]
+            alpha = overlay[:, :, 3] / 255.0
+
+            roi = background[y:y+h, x:x+w]
+
+            # Blend each channel
+            for c in range(3):
+                roi[:, :, c] = (1 - alpha) * roi[:, :, c] + alpha * bgr[:, :, c]
+
+            background[y:y+h, x:x+w] = roi
+        else:  # No alpha channel
+            background[y:y+h, x:x+w] = overlay
 
     def provide_feedback(self, decision, frame, joints, elbow_angle_mvg):
         """
@@ -164,3 +201,5 @@ class Act:
 
         # Display the frame (for debugging purposes)
         cv2.imshow('Sport Coaching Program', frame)
+
+        cv2.waitKey(1)
