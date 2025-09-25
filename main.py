@@ -1,96 +1,64 @@
 import cv2
 import mediapipe as mp
 from coach import Sense
-from coach import Think
 from coach import Act
-
+from coach import Think
 import numpy as np
 
 
-# Main Program Loop
 def main():
-    """
-    Main function to initialize the exercise tracking application.
-
-    This function sets up the webcam feed, initializes the Sense, Think, and Act components,
-    and starts the main loop to continuously process frames from the webcam.
-    """
-
-    # Initialize the components: Sense for input, Think for decision-making, Act for output
+    # Initialize components
     sense = Sense.Sense()
     act = Act.Act()
-    think = Think.Think(act)
+    think = Think.Think()
 
-    # Search and print available camera devices (may take a while to complete)
-    # searchValidCameraIndexes()
+    # Initialize webcam
+    cap = cv2.VideoCapture(0)
 
-    # Initialize the webcam capture
-    cap = cv2.VideoCapture(
-        0)  # Use the default camera (0) or change to a different index if multiple cameras are connected to system
+    print("Starting Ball Catching Game with Sound!")
+    print("Instructions: Close your hand when a ball approaches to catch it!")
 
-    # Main loop to process video frames
-    while cap.isOpened():
+    try:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        # Capture frame-by-frame from the webcam
-        ret, frame = cap.read()
-        if not ret:
-            print("Failed to grab frame")
-            break
+            # Flip frame for mirror effect
+            frame = cv2.flip(frame, 1)
 
-        # Sense: Detect joints
-        joints = sense.detect_joints(frame)
-        landmarks = joints.pose_landmarks
+            # Sense: Detect hands
+            hand_results = sense.detect_hands(frame)
 
-        # If landmarks are detected, calculate the elbow angle
-        if landmarks:
-            # Extract joint coordinates for the left arm
-            # For this example, we will use specific landmark indexes for shoulder, elbow, and wrist
-            shoulder = sense.extract_joint_coordinates(landmarks, 'left_shoulder')
-            elbow = sense.extract_joint_coordinates(landmarks, 'left_elbow')
-            wrist = sense.extract_joint_coordinates(landmarks, 'left_wrist')
+            # Get hand data
+            left_hand_landmarks, left_hand_state = sense.get_hand_data(hand_results, 'left')
+            right_hand_landmarks, right_hand_state = sense.get_hand_data(hand_results, 'right')
 
-            # Calculate the elbow angle
-            elbow_angle_mvg = sense.calculate_angle(shoulder, elbow, wrist)
+            # Get wrist positions
+            left_wrist_pos = sense.get_wrist_position_from_hand(left_hand_landmarks)
+            right_wrist_pos = sense.get_wrist_position_from_hand(right_hand_landmarks)
 
-            # Think: Next, give the angles to the decision-making component and make decisions based on joint data
-            think.update_state(elbow_angle_mvg, sense.previous_angle)
+            # Act: Update game visualization
+            balls_caught = act.update_game_visualization(left_wrist_pos, right_wrist_pos,
+                                                        left_hand_state, right_hand_state, frame)
 
-            # We'll save the previous angle for later comparison
-            sense.previous_angle = elbow_angle_mvg
+            # Display mediapipe view
+            act.display_mediapipe_view(frame, hand_results)
 
-            decision = think.state
+            # Exit on 'q' key
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
-            # Act: Provide feedback to the user.
-            act.provide_feedback(decision, frame=frame, joints=joints, elbow_angle_mvg=elbow_angle_mvg)
-            # Render the balloon visualization
-            act.visualize_balloon()
-
-            # think.check_for_timeout()
-
-        # Exit if the 'q' key is pressed
-        if cv2.waitKey(10) & 0xFF == ord('q'):
-            break
-
-    # Release the webcam and close all OpenCV windows
-    cap.release()
-    cv2.destroyAllWindows()
-
-
-def searchValidCameraIndexes():
-    # checks the first 10 indexes. May take a while to complete
-
-    print(f"Searching available camera index nrs")
-    valid_cams = []
-    for i in range(10):
-        cap = cv2.VideoCapture(i)
-        if cap is None or not cap.isOpened():
-            print(f"Warning: unable to open video source: {i}")
-        else:
-            print(f"Found valid video source: {i}")
-            valid_cams.append(i)
-
-    print(f"Available camera index nrs: {valid_cams}")
-
+    except KeyboardInterrupt:
+        print("Game interrupted by user")
+    except Exception as e:
+        print(f"Error during game execution: {e}")
+    finally:
+        # Cleanup
+        cap.release()
+        act.cleanup()
+        cv2.destroyAllWindows()
+        print("Game closed successfully!")
 
 if __name__ == "__main__":
     main()
