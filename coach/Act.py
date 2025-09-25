@@ -77,29 +77,67 @@ class Act:
 
         # Hand overlay positions
         if not self.left_grip:
-            lx, ly = 10, 300
+            lx, ly = 50, 300
             self.overlay_with_alpha(img, left, lx, ly)
         else:
-            lx, ly = 20, 350
+            lx, ly = 60, 350
             self.overlay_with_alpha(img, left_closed, lx, ly)
 
         if not self.right_grip:
-            rx, ry = 300, 300
+            rx, ry = 250, 300
             self.overlay_with_alpha(img, right, rx, ry)
         else:
-            rx, ry = 330, 350
+            rx, ry = 280, 350
             self.overlay_with_alpha(img, right_closed, rx, ry)
 
-        # ---- Collision detection ----
+        # ---- Collision detection function ----
         def check_hand_collision(cx, cy, r, x, y, w, h):
-            within_x = (x <= cx <= x + w)
+            """
+            cx, cy: balloon center
+            r: balloon radius
+            x, y: top-left of hand
+            w, h: width and height of hand image
+            """
+            # Full width including balloon edges
+            within_x = (x - r <= cx <= x + w + r)
+            
+            # Vertical collision around hand middle
             hand_mid_y = y + h // 2
-            within_y = abs(cy - hand_mid_y) <= r
+            within_y = (hand_mid_y - r <= cy <= hand_mid_y + r)
+            
             return within_x and within_y
 
+        # ---- Balloon movement ----
         if not self.balloon_captured:
             self.balloon_y += 10
             if self.balloon_y - self.balloon_radius > self.height:
+                self.balloon_y = -self.balloon_radius
+                self.balloon_x = random.randint(self.balloon_radius, self.width - self.balloon_radius)
+
+            # Closed hand positions for collision
+            hands = []
+            if self.left_grip:
+                hands.append((lx, ly, left_closed.shape[1], left_closed.shape[0]))
+            if self.right_grip:
+                hands.append((rx, ry, right_closed.shape[1], right_closed.shape[0]))
+
+            # Check collisions with closed hands
+            for (hx, hy, hw, hh) in hands:
+                if check_hand_collision(self.balloon_x, self.balloon_y, self.balloon_radius, hx, hy, hw, hh):
+                    self.score += 1
+
+                    # Play capture sound safely
+                    if getattr(self, 'capture_channel', None) is not None:
+                        self.capture_channel.stop()
+                    self.capture_channel = self.capture.play()
+
+                    self.balloon_captured = True
+                    break
+
+        # ---- Respawn balloon after capture sound finishes ----
+        if self.balloon_captured:
+            if getattr(self, 'capture_channel', None) is None or not self.capture_channel.get_busy():
+                self.balloon_captured = False
                 self.balloon_y = -self.balloon_radius
                 self.balloon_x = random.randint(self.balloon_radius, self.width - self.balloon_radius)
 
@@ -108,10 +146,8 @@ class Act:
                     cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
 
         cv2.imshow("Boulder climb!", img)
-
-
-        # Wait for 1 ms and check if the window should be closed
         cv2.waitKey(1)
+
 
     def overlay_with_alpha(self, background, overlay, x, y):
         """
