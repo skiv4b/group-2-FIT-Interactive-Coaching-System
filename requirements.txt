@@ -2,3 +2,4 @@ opencv-python
 mediapipe
 pyttsx3
 transitions
+pygame==2.6.1
