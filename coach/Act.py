@@ -14,7 +14,7 @@ class Act:
         self.width = width
         self.height = height
         self.left_grip = False
-        self.right_grip = True
+        self.right_grip = False
 
         # Initialize pygame mixer (fast sound playback)
         pygame.mixer.init()
@@ -27,10 +27,16 @@ class Act:
         # Track capture channel
         self.capture_channel = None
 
-    def left_grip(self):
+        self.balloon_radius = 50
+        self.balloon_y = -self.balloon_radius
+        self.balloon_x = random.randint(self.balloon_radius, self.width - self.balloon_radius)
+        self.balloon_captured = False
+        self.score = 0
+
+    def left_grip_state(self):
         self.left_grip = True
 
-    def right_grip (self):
+    def right_grip_state(self):
         self.right_grip = True
     
     def play_game_start(self):
@@ -47,11 +53,11 @@ class Act:
         self.capture_channel = self.capture.play()
 
     def visualize_balloon(self):
-        radius = 50
-        y_pos = -radius
-        x_pos = random.randint(radius, self.width - radius)
-        captured = False
-        self.score = 0   # 🔹 initialize score
+        img = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+
+        # Draw balloon only if not captured
+        if not self.balloon_captured:
+            cv2.circle(img, (self.balloon_x, self.balloon_y), self.balloon_radius, (0, 0, 255), -1)
 
         # Load images
         left = cv2.imread("files/LeftHandOpen.png", cv2.IMREAD_UNCHANGED)
@@ -69,73 +75,39 @@ class Act:
         left_closed = cv2.resize(left_closed, (150, 150))
         right_closed = cv2.resize(right_closed, (150, 150))
 
-        while True:
-            img = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+        # Hand overlay positions
+        if not self.left_grip:
+            lx, ly = 10, 300
+            self.overlay_with_alpha(img, left, lx, ly)
+        else:
+            lx, ly = 20, 350
+            self.overlay_with_alpha(img, left_closed, lx, ly)
 
-            # Draw balloon only if not captured
-            if not captured:
-                cv2.circle(img, (x_pos, y_pos), radius, (0, 0, 255), -1)
+        if not self.right_grip:
+            rx, ry = 300, 300
+            self.overlay_with_alpha(img, right, rx, ry)
+        else:
+            rx, ry = 330, 350
+            self.overlay_with_alpha(img, right_closed, rx, ry)
 
-            # Hand overlay positions
-            if not self.left_grip:
-                lx, ly = 10, 300
-                self.overlay_with_alpha(img, left, lx, ly)
-            else:
-                lx, ly = 20, 350
-                self.overlay_with_alpha(img, left_closed, lx, ly)
+        # ---- Collision detection ----
+        def check_hand_collision(cx, cy, r, x, y, w, h):
+            within_x = (x <= cx <= x + w)
+            hand_mid_y = y + h // 2
+            within_y = abs(cy - hand_mid_y) <= r
+            return within_x and within_y
 
-            if not self.right_grip:
-                rx, ry = 300, 300
-                self.overlay_with_alpha(img, right, rx, ry)
-            else:
-                rx, ry = 330, 350
-                self.overlay_with_alpha(img, right_closed, rx, ry)
+        if not self.balloon_captured:
+            self.balloon_y += 10
+            if self.balloon_y - self.balloon_radius > self.height:
+                self.balloon_y = -self.balloon_radius
+                self.balloon_x = random.randint(self.balloon_radius, self.width - self.balloon_radius)
 
-            # ---- Collision detection ----
-            def check_hand_collision(cx, cy, r, x, y, w, h):
-                within_x = (x <= cx <= x + w)
-                hand_mid_y = y + h // 2
-                within_y = abs(cy - hand_mid_y) <= r
-                return within_x and within_y
+        # Draw score
+        cv2.putText(img, f"Score: {self.score}", (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
 
-            if not captured:
-                if self.left_grip:
-                    h, w = left_closed.shape[:2]
-                    if check_hand_collision(x_pos, y_pos, radius, lx, ly, w, h):
-                        self.play_capture()
-                        self.score += 1   # 🔹 increase score
-                        captured = True
-
-                if self.right_grip:
-                    h, w = right_closed.shape[:2]
-                    if check_hand_collision(x_pos, y_pos, radius, rx, ry, w, h):
-                        self.play_capture()
-                        self.score += 1   # 🔹 increase score
-                        captured = True
-
-            # ---- Respawn only when sound finished ----
-            if captured:
-                if self.capture_channel is None or not self.capture_channel.get_busy():
-                    y_pos = -radius
-                    x_pos = random.randint(radius, self.width - radius)
-                    captured = False
-
-            # ---- Draw score ----
-            cv2.putText(img, f"Score: {self.score}", (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255), 2)
-
-            # Show frame
-            cv2.imshow("Boulder climb!", img)
-
-            if cv2.waitKey(30) & 0xFF == ord('q'):
-                break
-
-            # Move balloon only if not captured
-            if not captured:
-                y_pos += 5
-                if y_pos - radius > self.height:
-                    y_pos = -radius
-                    x_pos = random.randint(radius, self.width - radius)
+        cv2.imshow("Boulder climb!", img)
 
 
         # Wait for 1 ms and check if the window should be closed
@@ -178,13 +150,11 @@ class Act:
 
         mp.solutions.drawing_utils.draw_landmarks(frame, joints.pose_landmarks, mp.solutions.pose.POSE_CONNECTIONS)
 
-        # Define the number and text to display
-        number = elbow_angle_mvg
         text = " "
         if decision == 'flexion':
-            text = "You are flexing your elbow! %s" % number
+            text = "You are climbing!" 
         elif decision == 'extension':
-            text = "You are extending your elbow! %s" % number
+            text = "Your hand is open!"
 
 
         # Set the position, font, size, color, and thickness for the text
