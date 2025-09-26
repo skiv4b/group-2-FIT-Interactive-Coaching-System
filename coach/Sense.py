@@ -5,26 +5,22 @@ import cv2
 
 class Sense:
     def __init__(self):
-        # Initialize Mediapipe Hands
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
-            max_num_hands=2,  # ✅ Goed - zoekt naar 2 handen
-            min_detection_confidence=0.5,  # ✅ Iets hoger voor betere detectie
+            max_num_hands=2,  
+            min_detection_confidence=0.5,  
             min_tracking_confidence=0.5
         )
 
     def detect_hands(self, frame):
-        """Detect hands in the frame"""
         return self.hands.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     
     def get_hand_data(self, hand_results, hand_type):
-        """Extract hand landmarks for the specified hand type (left/right)"""
         
         if not hand_results.multi_hand_landmarks or not hand_results.multi_handedness:
             return None, 'unknown'
         
-        # Loop through all detected hands
         for i, hand_landmarks in enumerate(hand_results.multi_hand_landmarks):
             if i < len(hand_results.multi_handedness):
                 handedness = hand_results.multi_handedness[i]
@@ -38,11 +34,9 @@ class Sense:
         return None, 'unknown'
         
     def is_hand_closed(self, landmarks):
-        """Determine if hand is closed based on finger tip positions relative to palm"""
         if not landmarks:
             return False
 
-        # Get key landmarks
         wrist = landmarks[0]
         thumb_tip = landmarks[4]
         index_tip = landmarks[8]
@@ -50,20 +44,17 @@ class Sense:
         ring_tip = landmarks[16]
         pinky_tip = landmarks[20]
 
-        # Calculate distances from finger tips to wrist
         thumb_dist = math.sqrt((thumb_tip.x - wrist.x) ** 2 + (thumb_tip.y - wrist.y) ** 2)
         index_dist = math.sqrt((index_tip.x - wrist.x) ** 2 + (index_tip.y - wrist.y) ** 2)
         middle_dist = math.sqrt((middle_tip.x - wrist.x) ** 2 + (middle_tip.y - wrist.y) ** 2)
         ring_dist = math.sqrt((ring_tip.x - wrist.x) ** 2 + (ring_tip.y - wrist.y) ** 2)
         pinky_dist = math.sqrt((pinky_tip.x - wrist.x) ** 2 + (pinky_tip.y - wrist.y) ** 2)
 
-        # Calculate average distance
         avg_dist = (thumb_dist + index_dist + middle_dist + ring_dist + pinky_dist) / 5
 
         return avg_dist < 0.25
 
     def get_wrist_position_from_hand(self, hand_landmarks):
-        """Get wrist position from hand landmarks"""
         if not hand_landmarks:
             return None
         
