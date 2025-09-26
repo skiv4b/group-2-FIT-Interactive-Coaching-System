@@ -13,10 +13,8 @@ class Act:
         self.last_ball_time = time.time()
         self.ball_interval = 2.0  # seconds between new balls
         
-        # Haar PNG handafbeeldingen
         self.load_hand_images()
         
-        # Haar geluidsbestanden + onze fallback
         self.setup_sound()
         
         # Sound flags to prevent repeated playing
@@ -35,7 +33,6 @@ class Act:
                 self.right_hand_open is None or self.right_hand_closed is None):
                 raise Exception("Could not load one or more hand images")
             
-            # Resize zoals zij deed
             self.left_hand_open = cv2.resize(self.left_hand_open, (200, 200))
             self.right_hand_open = cv2.resize(self.right_hand_open, (200, 200))
             self.left_hand_closed = cv2.resize(self.left_hand_closed, (150, 150))
@@ -56,7 +53,6 @@ class Act:
         try:
             pygame.mixer.init()
             
-            # Probeer haar geluidsbestanden te laden
             try:
                 self.capture_sound = pygame.mixer.Sound("files/Capturing the Ball.mp3")
                 self.use_file_sounds = True
@@ -73,7 +69,7 @@ class Act:
             self.use_file_sounds = False
 
     def create_beep_sound(self, frequency, duration):
-        """Onze fallback beep geluiden"""
+        """fallback beep sounds"""
         try:
             sample_rate = 44100
             n_samples = int(round(duration * sample_rate))
@@ -97,7 +93,7 @@ class Act:
             return None
 
     def play_sound(self, sound):
-        """Speel geluid af"""
+        """play sound"""
         if sound and pygame.mixer.get_init():
             try:
                 sound.play()
