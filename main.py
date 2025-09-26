@@ -12,7 +12,6 @@ def main():
     act = Act.Act()
     think = Think.Think()
 
-    # Initialize webcam
     cap = cv2.VideoCapture(0)
 
     try:

@@ -30,7 +30,6 @@ class Sense:
                     is_closed = self.is_hand_closed(hand_landmarks.landmark)
                     return hand_landmarks.landmark, 'closed' if is_closed else 'open'
         
-        # No hand of the requested type was found
         return None, 'unknown'
         
     def is_hand_closed(self, landmarks):

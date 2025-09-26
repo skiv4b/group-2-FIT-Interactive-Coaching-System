@@ -10,4 +10,4 @@ class Think:
             return 1.0
         
         success_rate = self.balls_caught / total_balls
-        return min(2.0, max(0.5, success_rate))  # Between 0.5x and 2.0x speed
+        return min(2.0, max(0.5, success_rate))  
