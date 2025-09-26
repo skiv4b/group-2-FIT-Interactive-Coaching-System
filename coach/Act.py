@@ -8,10 +8,10 @@ class Act:
     def __init__(self):
         self.game_window_size = (800, 600)
         self.ball_radius = 30
-        self.balls = []  # List of active balls: [x, y, speed, caught]
+        self.balls = []  
         self.score = 0
         self.last_ball_time = time.time()
-        self.ball_interval = 2.0  # seconds between new balls
+        self.ball_interval = 2.0  
         
         self.load_hand_images()
         
@@ -22,7 +22,6 @@ class Act:
         self.catch_sound_cooldown = 0.3  # seconds
 
     def load_hand_images(self):
-        """Laad haar PNG handafbeeldingen"""
         try:
             self.left_hand_open = cv2.imread("files/LeftHandOpen.png", cv2.IMREAD_UNCHANGED)
             self.left_hand_closed = cv2.imread("files/LeftHandClosed.png", cv2.IMREAD_UNCHANGED)
@@ -49,7 +48,6 @@ class Act:
             self.right_hand_closed = None
 
     def setup_sound(self):
-        """Setup geluid met haar bestanden + onze fallback"""
         try:
             pygame.mixer.init()
             
@@ -288,10 +286,7 @@ class Act:
         # Instructions
         cv2.putText(frame, "Close your hand to catch balls!", (250, 80),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-        
-        cv2.putText(frame, "Red = Open hand, Blue = Closed hand", (220, 110),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-        
+           
         # Ball counter
         cv2.putText(frame, f"Balls on screen: {len(self.balls)}", (500, 550),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
